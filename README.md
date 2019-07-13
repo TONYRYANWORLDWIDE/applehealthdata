@@ -1,3 +1,8 @@
+# Expansion
+
+I've expanded on tdda's project to group and aggregate data for each metric, and push the grouped and ungrouped versions to a PostgreSQL database.
+
+
 # applehealthdata
 Extract Data from Apple Health App's XML Export
 
@@ -28,4 +33,6 @@ NOTE: this will leave you in a "detached HEAD" state in git.
 You can get back to HEAD when you're finished by saying:
 
     $ git checkout master
+	
+
 
