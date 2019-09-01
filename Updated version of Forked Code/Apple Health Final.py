@@ -1,100 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[4]:
-
-
-import os
-import datetime
-from datetime import datetime as dt
-from datetime import date as d
-import glob
-import pandas
-from pandas import *
-import pandas
-from sqlalchemy import create_engine
-import psycopg2
-from configparser import ConfigParser
-
-class ApplePostGre():
-    
-    def __init__(self):
-        self.productionfiles = 'C:/Users/tonyr/desktop/Self Education/Production Files/'
-        self.finalpath = 'C:/Users/tonyr/desktop/Self Education/Production Files/apple_health_export/'
-        os.chdir(self.finalpath)
-        self.sd2 = glob.glob('*.csv')
-    
-    
-    def config(self,filename='database.ini', section='postgresql'):
-        os.chdir('C:/Users/tonyr/desktop/Self Education/Production Files/')
-        parser = ConfigParser()
-        parser.read(filename)    
-        db = {}
-        if parser.has_section(section):
-            params = parser.items(section)
-            for param in params:
-                db[param[0]] = param[1]
-        else:
-            raise Exception('Section {0} not found in the {1} file'.format(section, filename))
-        return db
-    
-    def connect(self):
-        sd2 = self.sd2
-        nofourhundred = lambda x: dt.strptime(x,'%Y-%m-%d %H:%M:%S -0400')
-        finalpath = self.finalpath
-        DF = pandas.DataFrame()
-        conn = None
-        try:
-            params = self.config(filename='database.ini', section='postgresql')
-            conn = psycopg2.connect(**params)
-            enginestart = 'postgresql+psycopg2://' + params['user'] +':' + params['password'] + '@' + params['host'] + ':5432/' + params['database']
-            engine = create_engine(enginestart)
-            for x in range(0, len(sd2)):
-                thefile = self.sd2[x].replace('.csv','').lower()
-                command = """
-
-                DO $$                  
-                BEGIN 
-                    IF EXISTS
-                        ( SELECT 1
-                          FROM   information_schema.tables 
-                          WHERE  table_schema = 'public'
-                          AND    table_name = '""" +  thefile +  """'"""            """  
-                        )
-                    THEN
-                        Delete from """ +  thefile + """ ;
-                    END IF ;
-                END
-                $$ ;
-                """
-                cxn = engine.raw_connection()
-                cur = cxn.cursor()
-                cur.execute(command)
-                cur.close()
-                cxn.commit()
-                DF = pandas.read_csv(finalpath + self.sd2[x])
-                for col in DF.columns:
-                    try:
-                        if col.lower().find('date') != -1:                    
-                            DF[col] = DF[col].apply(nofourhundred)                                                      
-                    except(Exception) as error:                
-                        print(thefile + ' ' + col +  ' Column Error')
-                        print(error)                
-                DF.to_sql(thefile , con = engine, if_exists = 'append') 
-                print(thefile + ' Inserted')
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            print(thefile + 'File Error')
-        finally:
-            if conn is not None:
-                conn.close()
-                
-# if __name__ == '__main__':    
-#     g = ApplePostGre()
-#     g.connect()            
-
-
-# In[5]:
+# In[52]:
 
 
 # -*- coding: utf-8 -*-
@@ -336,13 +243,191 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
+# In[53]:
+
+
+import os
+import datetime
+from datetime import datetime as dt
+from datetime import date as d
+import glob
+import pandas
+from pandas import *
+import pandas
+from sqlalchemy import create_engine
+import psycopg2
+from configparser import ConfigParser
+
+class ApplePostGre():
+    
+    def __init__(self):
+        self.productionfiles = 'C:/Users/tonyr/desktop/Self Education/Production Files/'
+        self.finalpath = 'C:/Users/tonyr/desktop/Self Education/Production Files/apple_health_export/'
+        os.chdir(self.finalpath)
+        self.sd2 = glob.glob('*.csv')
+    
+    
+    def config(self,filename='database.ini', section='postgresql'):
+        os.chdir('C:/Users/tonyr/desktop/Self Education/Production Files/')
+        parser = ConfigParser()
+        parser.read(filename)    
+        db = {}
+        if parser.has_section(section):
+            params = parser.items(section)
+            for param in params:
+                db[param[0]] = param[1]
+        else:
+            raise Exception('Section {0} not found in the {1} file'.format(section, filename))
+        return db
+    
+    def connect(self):
+        sd2 = self.sd2
+        nofourhundred = lambda x: dt.strptime(x,'%Y-%m-%d %H:%M:%S -0400')
+        finalpath = self.finalpath
+        DF = pandas.DataFrame()
+        conn = None
+        try:
+            params = self.config(filename='database.ini', section='postgresql')
+            conn = psycopg2.connect(**params)
+            enginestart = 'postgresql+psycopg2://' + params['user'] +':' + params['password'] + '@' + params['host'] + ':5432/' + params['database']
+            engine = create_engine(enginestart)
+            for x in range(0, len(sd2)):
+                thefile = self.sd2[x].replace('.csv','').lower()
+                command = """
+
+                DO $$                  
+                BEGIN 
+                    IF EXISTS
+                        ( SELECT 1
+                          FROM   information_schema.tables 
+                          WHERE  table_schema = 'public'
+                          AND    table_name = '""" +  thefile +  """'"""            """  
+                        )
+                    THEN
+                        Delete from """ +  thefile + """ ;
+                    END IF ;
+                END
+                $$ ;
+                """
+                cxn = engine.raw_connection()
+                cur = cxn.cursor()
+                cur.execute(command)
+                cur.close()
+                cxn.commit()
+                DF = pandas.read_csv(finalpath + self.sd2[x])
+                for col in DF.columns:
+                    try:
+                        if col.lower().find('date') != -1:                    
+                            DF[col] = DF[col].apply(nofourhundred)                                                      
+                    except(Exception) as error:                
+                        print(thefile + ' ' + col +  ' Column Error')
+                        print(error)
+                endDate_TheDate =['sleepanalysis', 'mindfulsession']
+                if thefile in endDate_TheDate:
+                    DF = DF.reset_index(drop = True)
+                    DF['TheDate'] = DF['endDate'].dt.date
+                    if thefile == 'sleepanalysis':
+                        DF = DF[DF['value'] == 'HKCategoryValueSleepAnalysisInBed']
+                        DF = DF.reset_index(drop = True)
+                DF.to_sql(thefile , con = engine, if_exists = 'append') 
+                print(thefile + ' Inserted')
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+            print(thefile + 'File Error')
+        finally:
+            if conn is not None:
+                conn.close()
+                
+    def createGroupedTable(self):
+        sd2 = self.sd2
+        finalpath = self.finalpath
+        conn = None       
+
+        try:
+            params = self.config(filename='database.ini', section='postgresql')
+            conn = psycopg2.connect(**params)
+            enginestart = 'postgresql+psycopg2://' + params['user'] +':' + params['password'] + '@' + params['host'] + ':5432/' + params['database']
+            engine = create_engine(enginestart)
+            for x in range(0, len(sd2)):
+                try:
+                    thefile = sd2[x].replace('.csv','').lower()
+                    print(thefile)
+                    listNeedingValueCalculated = ['sleepanalysis'] #May need to add more tables here
+                    if thefile in listNeedingValueCalculated:
+                        command = (
+                        """
+                        ;with base as
+                        (
+                        Select "creationDate", "startDate", "endDate", "TheDate"
+                        ,(EXTRACT(EPOCH FROM ("endDate" - "startDate"))) / 3600 unithours
+                        from """ +  thefile + """
+                        order by "endDate" desc
+                        )
+                        Select sum(unithours), "TheDate" from base
+                        group by "TheDate"
+                        ;
+                        """
+                        ) 
+
+                    elif thefile == 'mindfulsession': # Grouped Table created in PostGre View           
+                        continue
+                    else:            
+                        command = (
+                        """
+                        Select 
+                        sum(value)  """ + thefile + '_Sum' + """ 
+                        ,avg(value)  """ + thefile + '_avg' + """
+                        ,cast("creationDate" as date) creationdate
+                        , cast(date_part('hour',"startDate") as varchar(2)) as Hour
+                        , cast(date_part('minute',"startDate") as varchar(2)) as Minute
+                        from """ +  thefile + """
+                        group by cast("creationDate" as date) 
+                        , date_part('hour',"startDate")
+                        , date_part('minute',"startDate")
+                        order by "creationdate", date_part('hour',"startDate")
+                        ;
+                        """
+                        )                
+                    engine = create_engine('postgresql+psycopg2://postgres:Password@localhost:5432/Money')
+                    conn = engine.raw_connection()
+                    cur = conn.cursor()
+                    cur.execute(command)
+                    cur.close()
+                    conn.commit()    
+                    connection = engine.connect()
+                    execute = connection.execute(command)
+                    DF = pandas.DataFrame(execute.fetchall())
+                    DF.columns = execute.keys()
+                    DF.to_csv(finalpath + 'grouped/' + 'grouped_' +  sd2[x])
+                    DF.to_sql(thefile + '_grouped', con = engine, if_exists = 'replace')        
+                except (Exception) as error:
+                    print(error)
+                    print("error:"  + sd2[x])
+        except (Exception) as error:
+            print(error)
+            print("error:"  + sd2[x])
+        finally:
+            if conn is not None:
+                conn.close()
+
+
+# In[54]:
+
+
+import os
+import datetime
+from datetime import datetime as dt
+from datetime import date as d
+import glob
+import zipfile
+import pandas
+
 if __name__ == '__main__':
     path = 'C:/Users/Tonyr/downloads/'
     os.chdir(path)
     cwd = os.getcwd()
     sd = glob.glob('export*.zip')
     sd.sort(key=os.path.getmtime)
-    # print("\n".join(sd))
     file = sd[-1]
     fullpath = path + file
     production_files = 'C:/Users/tonyr/Desktop/Self Education/Production Files/'
@@ -354,6 +439,7 @@ if __name__ == '__main__':
     data = HealthDataExtractor(theexport)
     data.report_stats()
     data.extract()
-    g = ApplePostGre()
-    g.connect() 
+    applePSQL = ApplePostGre()
+    applePSQL.connect() 
+    applePSQL.createGroupedTable()
 
