@@ -48,6 +48,9 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+#Json and gitignore
+*.json
+.gitignore
 
 # Django stuff:
 *.log
@@ -63,3 +66,4 @@ target/
 
 # Emacs backup files
 *~
+
