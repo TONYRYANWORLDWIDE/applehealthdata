@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[52]:
+# In[1]:
 
 
 # -*- coding: utf-8 -*-
@@ -243,7 +243,7 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
-# In[53]:
+# In[7]:
 
 
 import os
@@ -353,6 +353,9 @@ class ApplePostGre():
                     thefile = sd2[x].replace('.csv','').lower()
                     print(thefile)
                     listNeedingValueCalculated = ['sleepanalysis'] #May need to add more tables here
+                    groupByHourMinute = ['heartrate']
+                    groupByCreationDate = ['appleexercisetime','basalenergyburned','stepcount']
+                    skipTable = ['mindfulsession','height','waistcircumference','restingheartrate','walkingheartrateaverage']
                     if thefile in listNeedingValueCalculated:
                         command = (
                         """
@@ -367,9 +370,41 @@ class ApplePostGre():
                         group by "TheDate"
                         ;
                         """
-                        ) 
+                        )
+                    elif thefile == 'workout':
+                        command = """
+select cast("creationDate" as date) creationdate,
+sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeCrossTraining') as HKWorkoutActivityTypeCrossTrainingDuration
+,sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeYoga') as HKWorkoutActivityTypeYogaDuration
+,sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeRunning') as HKWorkoutActivityTypeRunningDuration
+,sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeTraditionalStrengthTraining') as HKWorkoutActivityTypeTraditionalStrengthTrainingDuration
+,sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeHighIntensityIntervalTraining') as HKWorkoutActivityTypeHighIntensityIntervalTrainingDuration
+,sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeWalking') as HKWorkoutActivityTypeWalkingDuration
+,sum("totalEnergyBurned") filter(where "workoutActivityType" = 'HKWorkoutActivityTypeCrossTraining') as HKWorkoutActivityTypeCrossTrainingEnergyBurned
+,sum("totalEnergyBurned") filter(where "workoutActivityType" = 'HKWorkoutActivityTypeYoga') as HKWorkoutActivityTypeYogaEnergyBurned
+,sum("totalEnergyBurned") filter(where "workoutActivityType" = 'HKWorkoutActivityTypeRunning') as HKWorkoutActivityTypeRunningEnergyBurned
+,sum("totalEnergyBurned") filter(where "workoutActivityType" = 'HKWorkoutActivityTypeTraditionalStrengthTraining') as HKWorkoutActivityTypeTraditionalStrengthTrainingEnergyBurned
+,sum("totalEnergyBurned") filter(where "workoutActivityType" = 'HKWorkoutActivityTypeHighIntensityIntervalTraining') as HKWorkoutActivityTypeHighIntensityIntervalTrainingEnergyBurned
+,sum("totalEnergyBurned") filter(where "workoutActivityType" = 'HKWorkoutActivityTypeWalking') as HKWorkoutActivityTypeWalkingEnergyBurned
+from workout
+group by cast("creationDate" as date) 
 
-                    elif thefile == 'mindfulsession': # Grouped Table created in PostGre View           
+                        """
+                    elif thefile in groupByCreationDate:
+                        command = (
+                        """
+                        Select 
+                        sum(value)  """ + thefile + '_Sum' + """ 
+                        ,avg(value)  """ + thefile + '_avg' + """
+                        ,cast("creationDate" as date) creationdate
+                        from """ +  thefile + """
+                        group by cast("creationDate" as date) 
+                        order by "creationdate"
+                        ;
+                        """
+                        )  
+                        
+                    elif thefile in skipTable: # Grouped Table created in PostGre View for mindfulsession           
                         continue
                     else:            
                         command = (
@@ -411,7 +446,7 @@ class ApplePostGre():
                 conn.close()
 
 
-# In[54]:
+# In[8]:
 
 
 import os
