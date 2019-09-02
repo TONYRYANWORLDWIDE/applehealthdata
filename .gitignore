@@ -45,6 +45,10 @@ coverage.xml
 *,cover
 .hypothesis/
 
+
+
+*.ipynb
+
 # Translations
 *.mo
 *.pot
