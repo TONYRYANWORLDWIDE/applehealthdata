@@ -433,6 +433,9 @@ group by cast("creationDate" as date)
                     execute = connection.execute(command)
                     DF = pandas.DataFrame(execute.fetchall())
                     DF.columns = execute.keys()
+                    combodatetime = lambda x: dt.strptime(dt.strftime(x['creationdate'],"%Y-%m-%d"),"%Y-%m-%d").replace(hour=int(x['hour']), minute=int(x['minute']))
+                    if thefile in groupByHourMinute:
+                        DF['creationdatetime'] = DF.apply(combodatetime,axis =1)                        
                     DF.to_csv(finalpath + 'grouped/' + 'grouped_' +  sd2[x])
                     DF.to_sql(thefile + '_grouped', con = engine, if_exists = 'replace')        
                 except (Exception) as error:
