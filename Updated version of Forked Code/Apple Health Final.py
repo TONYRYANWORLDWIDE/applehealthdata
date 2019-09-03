@@ -353,8 +353,8 @@ class ApplePostGre():
                     thefile = sd2[x].replace('.csv','').lower()
                     print(thefile)
                     listNeedingValueCalculated = ['sleepanalysis'] #May need to add more tables here
-                    groupByHourMinute = ['heartrate']
-                    groupByCreationDate = ['appleexercisetime','basalenergyburned','stepcount']
+                    groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
+                    groupByCreationDate = ['appleexercisetime','basalenergyburned']
                     skipTable = ['mindfulsession','height','waistcircumference','restingheartrate','walkingheartrateaverage']
                     if thefile in listNeedingValueCalculated:
                         command = (
