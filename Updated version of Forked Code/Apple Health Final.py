@@ -355,7 +355,7 @@ class ApplePostGre():
                     listNeedingValueCalculated = ['sleepanalysis'] #May need to add more tables here
                     groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
                     groupByCreationDate = ['appleexercisetime','basalenergyburned']
-                    skipTable = ['mindfulsession','height','waistcircumference','restingheartrate','walkingheartrateaverage']
+                    skipTable = ['activitysummary','applestandhour','mindfulsession','height','waistcircumference','restingheartrate','walkingheartrateaverage']
                     if thefile in listNeedingValueCalculated:
                         command = (
                         """
