@@ -243,7 +243,7 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
-# In[7]:
+# In[15]:
 
 
 import os
@@ -352,6 +352,26 @@ class ApplePostGre():
                 try:
                     thefile = sd2[x].replace('.csv','').lower()
                     print(thefile)
+                    command = """
+                    DO $$                  
+                    BEGIN 
+                        IF EXISTS
+                            ( SELECT 1
+                              FROM   information_schema.tables 
+                              WHERE  table_schema = 'public'
+                              AND    table_name = '""" +  thefile +  """_grouped'"""            """  
+                            )
+                        THEN
+                            Delete from """ +  thefile +  """_grouped"""   """ ;
+                        END IF ;
+                    END
+                    $$ ;
+                    """
+                    cxn = engine.raw_connection()
+                    cur = cxn.cursor()
+                    cur.execute(command)
+                    cur.close()
+                    cxn.commit()
                     listNeedingValueCalculated = ['sleepanalysis'] #May need to add more tables here
                     groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
                     groupByCreationDate = ['appleexercisetime','basalenergyburned']
@@ -437,7 +457,7 @@ group by cast("creationDate" as date)
                     if thefile in groupByHourMinute:
                         DF['creationdatetime'] = DF.apply(combodatetime,axis =1)                        
                     DF.to_csv(finalpath + 'grouped/' + 'grouped_' +  sd2[x])
-                    DF.to_sql(thefile + '_grouped', con = engine, if_exists = 'replace')        
+                    DF.to_sql(thefile + '_grouped', con = engine, if_exists = 'append')        
                 except (Exception) as error:
                     print(error)
                     print("error:"  + sd2[x])
@@ -449,7 +469,7 @@ group by cast("creationDate" as date)
                 conn.close()
 
 
-# In[8]:
+# In[14]:
 
 
 import os
@@ -480,4 +500,12 @@ if __name__ == '__main__':
     applePSQL = ApplePostGre()
     applePSQL.connect() 
     applePSQL.createGroupedTable()
+
+
+# In[16]:
+
+
+applePSQL = ApplePostGre()
+
+applePSQL.createGroupedTable()
 
