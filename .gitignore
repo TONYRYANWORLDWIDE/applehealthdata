@@ -46,8 +46,7 @@ coverage.xml
 .hypothesis/
 
 
-#Python Notebook
-*.ipynb
+
 
 # Translations
 *.mo
