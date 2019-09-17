@@ -243,7 +243,7 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
-# In[15]:
+# In[7]:
 
 
 import os
@@ -372,9 +372,10 @@ class ApplePostGre():
                     cur.execute(command)
                     cur.close()
                     cxn.commit()
-                    listNeedingValueCalculated = ['sleepanalysis'] #May need to add more tables here
+                    listNeedingValueCalculated = ['sleepanalysis','mindfulsession'] #May need to add more tables here
                     groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
-                    groupByCreationDate = ['appleexercisetime','basalenergyburned']
+                    groupByCreationDate = ['appleexercisetime','dietarymolybdenum']
+                    groupByEndDate = ['basalenergyburned']
                     skipTable = ['activitysummary','applestandhour','mindfulsession','height','waistcircumference','restingheartrate','walkingheartrateaverage']
                     if thefile in listNeedingValueCalculated:
                         command = (
@@ -419,11 +420,21 @@ group by cast("creationDate" as date)
                         ,cast("creationDate" as date) creationdate
                         from """ +  thefile + """
                         group by cast("creationDate" as date) 
-                        order by "creationdate"
                         ;
                         """
                         )  
-                        
+                    elif thefile in groupByEndDate:
+                        command = (
+                        """
+                        Select 
+                        sum(value)  """ + thefile + '_Sum' + """ 
+                        ,avg(value)  """ + thefile + '_avg' + """
+                        ,cast("endDate" as date) "TheDate"
+                        from """ +  thefile + """
+                        group by cast("endDate" as date) 
+                        ;
+                        """
+                        )      
                     elif thefile in skipTable: # Grouped Table created in PostGre View for mindfulsession           
                         continue
                     else:            
@@ -502,7 +513,7 @@ if __name__ == '__main__':
     applePSQL.createGroupedTable()
 
 
-# In[16]:
+# In[9]:
 
 
 applePSQL = ApplePostGre()
