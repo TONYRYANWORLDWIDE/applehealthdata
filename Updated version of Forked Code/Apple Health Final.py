@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[12]:
 
 
 # -*- coding: utf-8 -*-
@@ -375,8 +375,8 @@ class ApplePostGre():
                     listNeedingValueCalculated = ['sleepanalysis','mindfulsession'] #May need to add more tables here
                     groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
                     groupByCreationDate = ['appleexercisetime','dietarymolybdenum']
-                    groupByEndDate = ['basalenergyburned']
-                    skipTable = ['activitysummary','applestandhour','mindfulsession','height','waistcircumference','restingheartrate','walkingheartrateaverage']
+                    groupByEndDate = ['basalenergyburned','restingheartrate']
+                    skipTable = ['activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage']
                     if thefile in listNeedingValueCalculated:
                         command = (
                         """
@@ -480,7 +480,7 @@ group by cast("creationDate" as date)
                 conn.close()
 
 
-# In[14]:
+# In[13]:
 
 
 import os
@@ -511,12 +511,4 @@ if __name__ == '__main__':
     applePSQL = ApplePostGre()
     applePSQL.connect() 
     applePSQL.createGroupedTable()
-
-
-# In[9]:
-
-
-applePSQL = ApplePostGre()
-
-applePSQL.createGroupedTable()
 
