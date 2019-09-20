@@ -2,6 +2,11 @@
 # coding: utf-8
 
 # # Created MindfulSession table and includes whether endtime was within 30 mins either way of sleep
+# 
+# 
+
+# In[24]:
+
 
 import pandas
 import psycopg2
@@ -115,7 +120,6 @@ if __name__ == '__main__':
     calories_burned.to_csv(prodfiles + 'caloriesburned.csv', index = False)
     mindfulgrouped = a.mindfulg().groupby(['TheDate','endedWithinThirtyMinsOfSleeping'],as_index=False)['unithours'].sum()
 
-
 import ggplot
 from ggplot import *
 # 1 means ended within 30 mins of sleep
@@ -136,3 +140,4 @@ gg35.show()
 
 gg33.save(filename = 'Three Day Meditaion Vs 3 Day Sleep Sum.png')
 gg35.save(filename = 'Three Day Meditaion Vs 3 Day Sleep Average.png')
+
