@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[12]:
+# In[1]:
 
 
 # -*- coding: utf-8 -*-
@@ -243,13 +243,14 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
-# In[7]:
+# In[4]:
 
 
 import os
 import datetime
 from datetime import datetime as dt
 from datetime import date as d
+from datetime import timedelta
 import glob
 import pandas
 from pandas import *
@@ -279,6 +280,12 @@ class ApplePostGre():
         else:
             raise Exception('Section {0} not found in the {1} file'.format(section, filename))
         return db
+    def rowstartdate (self,row):
+        if row['Hour'] >= 18 :
+            adjustdate = row['startDate'] + timedelta(days=1)     
+        else:
+            adjustdate = row['startDate']
+        return adjustdate
     
     def connect(self):
         sd2 = self.sd2
@@ -329,6 +336,9 @@ class ApplePostGre():
                     if thefile == 'sleepanalysis':
                         DF = DF[DF['value'] == 'HKCategoryValueSleepAnalysisInBed']
                         DF = DF.reset_index(drop = True)
+                        hour = lambda x:  x.hour
+                        DF['Hour'] = DF['startDate'].apply(hour)
+                        DF['TheDate'] = DF.apply(lambda row: self.rowstartdate(row), axis=1)
                 DF.to_sql(thefile , con = engine, if_exists = 'append') 
                 print(thefile + ' Inserted')
         except (Exception, psycopg2.DatabaseError) as error:
@@ -480,7 +490,7 @@ group by cast("creationDate" as date)
                 conn.close()
 
 
-# In[13]:
+# In[5]:
 
 
 import os
