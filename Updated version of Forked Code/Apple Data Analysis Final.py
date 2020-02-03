@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Created MindfulSession table and includes whether endtime was within 30 mins either way of sleep
-# 
-# 
-
-# In[24]:
-
-
 import pandas
 import psycopg2
 from configparser import ConfigParser
@@ -119,25 +112,3 @@ if __name__ == '__main__':
     calories_burned = a.connect('caloriesburned')
     calories_burned.to_csv(prodfiles + 'caloriesburned.csv', index = False)
     mindfulgrouped = a.mindfulg().groupby(['TheDate','endedWithinThirtyMinsOfSleeping'],as_index=False)['unithours'].sum()
-
-import ggplot
-from ggplot import *
-# 1 means ended within 30 mins of sleep
-
-
-gg33 = ggplot(sm[sm['SleepTime'] > 1].iloc[2:100,0:100], aes(
-    'Meditation_Rolling_ThreeSum','Sleep_Rolling_ThreeSum')) + geom_point(
-    ) + ggtitle("Sleep Vs Meditation") + xlab("3 Day Meditation Total") + ylab(
-    "3 Day Sleep Total") + facet_wrap("endedWithinThirtyMinsOfSleeping")
-gg33.show()
-
-gg35 = ggplot(sm[sm['SleepTime'] > 1].iloc[2:100,0:100], aes(
-    'Meditation_Rolling_ThreeSum','Sleep_Rolling_ThreeDayAverage')) + geom_point(
-    ) +  xlab("3 Day Meditation Total") + ylab(
-    "3 Day Sleep Average") + facet_wrap("endedWithinThirtyMinsOfSleeping")
-gg35.show()
-
-
-gg33.save(filename = 'Three Day Meditaion Vs 3 Day Sleep Sum.png')
-gg35.save(filename = 'Three Day Meditaion Vs 3 Day Sleep Average.png')
-

@@ -289,7 +289,7 @@ class ApplePostGre():
     
     def connect(self):
         sd2 = self.sd2
-        nofourhundred = lambda x: dt.strptime(x,'%Y-%m-%d %H:%M:%S -0400')
+        nofourhundred = lambda x: dt.strptime(x,'%Y-%m-%d %H:%M:%S -0500')
         finalpath = self.finalpath
         DF = pandas.DataFrame()
         conn = None
