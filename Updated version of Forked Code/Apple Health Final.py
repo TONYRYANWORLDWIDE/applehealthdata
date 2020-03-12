@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 # -*- coding: utf-8 -*-
@@ -243,7 +243,7 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
-# In[4]:
+# In[ ]:
 
 
 import os
@@ -253,8 +253,8 @@ from datetime import date as d
 from datetime import timedelta
 import glob
 import pandas
-from pandas import *
-import pandas
+# from pandas import *
+# import pandas
 from sqlalchemy import create_engine
 import psycopg2
 from configparser import ConfigParser
@@ -289,7 +289,7 @@ class ApplePostGre():
     
     def connect(self):
         sd2 = self.sd2
-        nofourhundred = lambda x: dt.strptime(x,'%Y-%m-%d %H:%M:%S -0500')
+        nofourhundred = lambda x: dt.strptime(x,'%Y-%m-%d %H:%M:%S -0400') # need to write utc to local time function
         finalpath = self.finalpath
         DF = pandas.DataFrame()
         conn = None
@@ -298,8 +298,13 @@ class ApplePostGre():
             conn = psycopg2.connect(**params)
             enginestart = 'postgresql+psycopg2://' + params['user'] +':' + params['password'] + '@' + params['host'] + ':5432/' + params['database']
             engine = create_engine(enginestart)
+            exclude = ['headphoneaudioexposure','flightsclimbed']
             for x in range(0, len(sd2)):
                 thefile = self.sd2[x].replace('.csv','').lower()
+                if thefile in exclude:
+                    print(thefile + ' skipped')
+                    continue
+                    
                 command = """
 
                 DO $$                  
@@ -329,6 +334,8 @@ class ApplePostGre():
                     except(Exception) as error:                
                         print(thefile + ' ' + col +  ' Column Error')
                         print(error)
+#                     finally:
+#                         continue
                 endDate_TheDate =['sleepanalysis', 'mindfulsession']
                 if thefile in endDate_TheDate:
                     DF = DF.reset_index(drop = True)
@@ -341,12 +348,15 @@ class ApplePostGre():
                         DF['TheDate'] = DF.apply(lambda row: self.rowstartdate(row), axis=1)
                 DF.to_sql(thefile , con = engine, if_exists = 'append') 
                 print(thefile + ' Inserted')
+#                 if thefile == 'heartrate':
+#                     print(DF)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
             print(thefile + 'File Error')
         finally:
             if conn is not None:
                 conn.close()
+#             continue
                 
     def createGroupedTable(self):
         sd2 = self.sd2
@@ -386,7 +396,7 @@ class ApplePostGre():
                     groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
                     groupByCreationDate = ['appleexercisetime','dietarymolybdenum']
                     groupByEndDate = ['basalenergyburned','restingheartrate']
-                    skipTable = ['activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage']
+                    skipTable = ['applestandtime','activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage']
                     if thefile in listNeedingValueCalculated:
                         command = (
                         """
@@ -445,9 +455,8 @@ group by cast("creationDate" as date)
                         ;
                         """
                         )      
-                    elif thefile in skipTable: # Grouped Table created in PostGre View for mindfulsession           
-                        continue
-                    else:            
+
+                    elif thefile in groupByHourMinute:            
                         command = (
                         """
                         Select 
@@ -463,7 +472,11 @@ group by cast("creationDate" as date)
                         order by "creationdate", date_part('hour',"startDate")
                         ;
                         """
-                        )                
+                        )  
+                    elif thefile in skipTable: # Grouped Table created in PostGre View for mindfulsession           
+                        continue
+                    else:
+                        continue
                     engine = create_engine('postgresql+psycopg2://postgres:Password@localhost:5432/Money')
                     conn = engine.raw_connection()
                     cur = conn.cursor()
@@ -490,7 +503,7 @@ group by cast("creationDate" as date)
                 conn.close()
 
 
-# In[5]:
+# In[ ]:
 
 
 import os
