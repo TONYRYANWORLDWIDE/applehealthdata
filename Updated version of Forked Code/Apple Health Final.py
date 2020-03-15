@@ -393,10 +393,10 @@ class ApplePostGre():
                     cur.close()
                     cxn.commit()
                     listNeedingValueCalculated = ['sleepanalysis','mindfulsession'] #May need to add more tables here
-                    groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
+                    groupByHourMinute = ['heartrate','activeenergyburned']
                     groupByCreationDate = ['appleexercisetime','dietarymolybdenum']
                     groupByEndDate = ['basalenergyburned','restingheartrate']
-                    skipTable = ['applestandtime','activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage']
+                    skipTable = ['applestandtime','activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage','stepcount']
                     if thefile in listNeedingValueCalculated:
                         command = (
                         """
