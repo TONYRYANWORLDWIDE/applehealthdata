@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 # -*- coding: utf-8 -*-
@@ -243,7 +243,7 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
-# In[ ]:
+# In[7]:
 
 
 import os
@@ -298,7 +298,7 @@ class ApplePostGre():
             conn = psycopg2.connect(**params)
             enginestart = 'postgresql+psycopg2://' + params['user'] +':' + params['password'] + '@' + params['host'] + ':5432/' + params['database']
             engine = create_engine(enginestart)
-            exclude = ['headphoneaudioexposure','flightsclimbed']
+            exclude = ['headphoneaudioexposure','flightsclimbed','applestandtime','activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage','stepcount']
             for x in range(0, len(sd2)):
                 thefile = self.sd2[x].replace('.csv','').lower()
                 if thefile in exclude:
@@ -368,10 +368,15 @@ class ApplePostGre():
             conn = psycopg2.connect(**params)
             enginestart = 'postgresql+psycopg2://' + params['user'] +':' + params['password'] + '@' + params['host'] + ':5432/' + params['database']
             engine = create_engine(enginestart)
+            exclude = ['headphoneaudioexposure','flightsclimbed','applestandtime','activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage','stepcount']
             for x in range(0, len(sd2)):
+            
                 try:
                     thefile = sd2[x].replace('.csv','').lower()
                     print(thefile)
+                    if thefile in exclude:
+                        print(thefile + ' skipped grouping')
+                        continue
                     command = """
                     DO $$                  
                     BEGIN 
@@ -393,7 +398,7 @@ class ApplePostGre():
                     cur.close()
                     cxn.commit()
                     listNeedingValueCalculated = ['sleepanalysis','mindfulsession'] #May need to add more tables here
-                    groupByHourMinute = ['heartrate','activeenergyburned']
+                    groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
                     groupByCreationDate = ['appleexercisetime','dietarymolybdenum']
                     groupByEndDate = ['basalenergyburned','restingheartrate']
                     skipTable = ['applestandtime','activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage','stepcount']
@@ -473,6 +478,7 @@ group by cast("creationDate" as date)
                         ;
                         """
                         )  
+                        print(command + ' THis Is The Command')
                     elif thefile in skipTable: # Grouped Table created in PostGre View for mindfulsession           
                         continue
                     else:
@@ -503,7 +509,7 @@ group by cast("creationDate" as date)
                 conn.close()
 
 
-# In[ ]:
+# In[12]:
 
 
 import os
@@ -534,4 +540,12 @@ if __name__ == '__main__':
     applePSQL = ApplePostGre()
     applePSQL.connect() 
     applePSQL.createGroupedTable()
+
+
+# In[8]:
+
+
+applePSQL = ApplePostGre()
+#     applePSQL.connect() 
+applePSQL.createGroupedTable()
 
