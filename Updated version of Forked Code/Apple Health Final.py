@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[7]:
 
 
 # -*- coding: utf-8 -*-
@@ -138,7 +138,7 @@ class HealthDataExtractor(object):
         unless verbose has been set to False.
     """
     
-    path = 'C:/Users/EMTG8AR/Desktop/export/apple_health_export/'
+#     path = 'C:/Users/EMTG8AR/Desktop/export/apple_health_export/'
     def __init__(self, path, verbose=VERBOSE):
         self.in_path = path
         self.verbose = verbose
@@ -243,7 +243,7 @@ class HealthDataExtractor(object):
         print('Record types:\n%s\n' % format_freqs(self.record_types))
 
 
-# In[7]:
+# In[17]:
 
 
 import os
@@ -398,8 +398,8 @@ class ApplePostGre():
                     cur.close()
                     cxn.commit()
                     listNeedingValueCalculated = ['sleepanalysis','mindfulsession'] #May need to add more tables here
-                    groupByHourMinute = ['heartrate','activeenergyburned','stepcount']
-                    groupByCreationDate = ['appleexercisetime','dietarymolybdenum']
+                    groupByHourMinute = ['heartrate','activeenergyburned','stepcount','heartratevariabilitysdnn']
+                    groupByCreationDate = ['appleexercisetime','dietarymolybdenum','vo2max']
                     groupByEndDate = ['basalenergyburned','restingheartrate']
                     skipTable = ['applestandtime','activitysummary','applestandhour','mindfulsession','height','waistcircumference','walkingheartrateaverage','stepcount']
                     if thefile in listNeedingValueCalculated:
@@ -407,18 +407,19 @@ class ApplePostGre():
                         """
                         ;with base as
                         (
-                        Select "creationDate", "startDate", "endDate", "TheDate"
+                        Select "creationDate", "startDate", "endDate", "TheDate"::timestamp::date
                         ,(EXTRACT(EPOCH FROM ("endDate" - "startDate"))) / 3600 unithours
                         from """ +  thefile + """
                         order by "endDate" desc
                         )
-                        Select sum(unithours), "TheDate" from base
-                        group by "TheDate"
+                        Select sum(unithours), "TheDate"::timestamp::date from base
+                        group by "TheDate"::timestamp::date
                         ;
                         """
                         )
+                        print(command + ' THis Is The Command')
                     elif thefile == 'workout':
-                        command = """
+                        commandwrisl = """
 select cast("creationDate" as date) creationdate,
 sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeCrossTraining') as HKWorkoutActivityTypeCrossTrainingDuration
 ,sum(duration) filter(where "workoutActivityType" = 'HKWorkoutActivityTypeYoga') as HKWorkoutActivityTypeYogaDuration
@@ -477,7 +478,8 @@ group by cast("creationDate" as date)
                         order by "creationdate", date_part('hour',"startDate")
                         ;
                         """
-                        )  
+                        ) 
+                        
                         print(command + ' THis Is The Command')
                     elif thefile in skipTable: # Grouped Table created in PostGre View for mindfulsession           
                         continue
@@ -494,7 +496,7 @@ group by cast("creationDate" as date)
                     DF = pandas.DataFrame(execute.fetchall())
                     DF.columns = execute.keys()
                     combodatetime = lambda x: dt.strptime(dt.strftime(x['creationdate'],"%Y-%m-%d"),"%Y-%m-%d").replace(hour=int(x['hour']), minute=int(x['minute']))
-                    if thefile in groupByHourMinute:
+                    if thefile in groupByHourMinute and thefile != 'heartratevariabilitysdnn':
                         DF['creationdatetime'] = DF.apply(combodatetime,axis =1)                        
                     DF.to_csv(finalpath + 'grouped/' + 'grouped_' +  sd2[x])
                     DF.to_sql(thefile + '_grouped', con = engine, if_exists = 'append')        
@@ -509,7 +511,7 @@ group by cast("creationDate" as date)
                 conn.close()
 
 
-# In[12]:
+# In[10]:
 
 
 import os
@@ -542,10 +544,35 @@ if __name__ == '__main__':
     applePSQL.createGroupedTable()
 
 
-# In[8]:
+# In[6]:
 
 
-applePSQL = ApplePostGre()
-#     applePSQL.connect() 
-applePSQL.createGroupedTable()
+import os
+import datetime
+from datetime import datetime as dt
+from datetime import date as d
+import glob
+import zipfile
+import pandas
+
+if __name__ == '__main__':
+    path = 'C:/Users/Tonyr/downloads/'
+    os.chdir(path)
+    cwd = os.getcwd()
+    sd = glob.glob('export*.zip')
+    sd.sort(key=os.path.getmtime)
+    file = sd[-1]
+    fullpath = path + file
+    production_files = 'C:/Users/tonyr/Desktop/Self Education/Production Files/'
+    zip_ref = zipfile.ZipFile(fullpath, 'r')
+    zip_ref.extractall(production_files)
+    zip_ref.close()
+    production_files = 'C:/Users/tonyr/Desktop/Self Education/Production Files/'
+    theexport = production_files + 'apple_health_export/export.xml'
+    data = HealthDataExtractor(theexport)
+    data.report_stats()
+    data.extract()
+    applePSQL = ApplePostGre()
+    applePSQL.connect() 
+    applePSQL.createGroupedTable()
 
